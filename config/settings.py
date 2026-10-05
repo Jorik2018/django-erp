@@ -253,9 +253,9 @@ DATABASES = {
 AUTH_USER_MODEL = "authenticator.User"
 
 
-LOGIN_REDIRECT_URL = "/"
-LOGIN_URL = "/auth/sign-in/"
-LOGOUT_REDIRECT_URL = "/"
+LOGIN_URL = "sign-in"
+LOGIN_REDIRECT_URL = "dashboard"
+LOGOUT_REDIRECT_URL = "sign-in"
 
 
 AUTH_PASSWORD_VALIDATORS = [
