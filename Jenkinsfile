@@ -285,46 +285,44 @@ pipeline {
         }
 
 
-        // ============================================================
-        // 10. Configurar servicio Windows
-        // ============================================================
+stage('Configure Service') {
+    steps {
+        withCredentials([
+            string(
+                credentialsId: 'VAULT_TOKEN',
+                variable: 'VAULT_TOKEN'
+            ),
+            string(
+                credentialsId: 'REDIS-DEVELOP',
+                variable: 'DEFENDER_REDIS_URL'
+            )
+        ]) {
+            bat '''
+                echo ==========================================
+                echo Configuring Django ERP Windows service
+                echo ==========================================
 
-        stage('Configure Service') {
-            steps {
-                withCredentials([
-                    string(
-                        credentialsId: 'VAULT_TOKEN',
-                        variable: 'VAULT_TOKEN'
-                    )
-                ]) {
-                    bat '''
-                        echo ==========================================
-                        echo Configuring Django ERP Windows service
-                        echo ==========================================
+                "%PYTHON_HOME%\\python.exe" "%SERVICE_MANAGER%" install ^
+                    "%SERVICE_ID%" ^
+                    "%DEPLOY_DIR%" ^
+                    --name "%SERVICE_NAME%" ^
+                    --description "%SERVICE_DESCRIPTION%" ^
+                    --type rust ^
+                    --executable "%DEPLOY_DIR%\\.venv\\Scripts\\waitress-serve.exe" ^
+                    --args "--listen=127.0.0.1:%PORT% config.wsgi:application" ^
+                    --env "BASE_PATH=%BASE_PATH%" ^
+                    --env "DEFENDER_REDIS_URL=%DEFENDER_REDIS_URL%" ^
+                    --env "VAULT_ADDR=%VAULT_ADDR%" ^
+                    --env "VAULT_TOKEN=%VAULT_TOKEN%"
 
-                        "%PYTHON_HOME%\\python.exe" ^
-                            "%SERVICE_MANAGER%" ^
-                            install ^
-                            "%SERVICE_ID%" ^
-                            "%DEPLOY_DIR%" ^
-                            --name "%SERVICE_NAME%" ^
-                            --description "%SERVICE_DESCRIPTION%" ^
-                            --type waitress ^
-                            --main "config.wsgi:application" ^
-                            --host "127.0.0.1:%PORT%" ^
-                            --env "BASE_PATH=%BASE_PATH%" ^
-                            --env "DEFENDER_REDIS_URL=%DEFENDER_REDIS_URL%" ^
-                            --env "VAULT_ADDR=%VAULT_ADDR%" ^
-                            --env "VAULT_TOKEN=%VAULT_TOKEN%"
-
-                        if errorlevel 1 (
-                            echo ERROR: Service configuration failed.
-                            exit /B 1
-                        )
-                    '''
-                }
-            }
+                if errorlevel 1 (
+                    echo ERROR: Service configuration failed
+                    exit /B 1
+                )
+            '''
         }
+    }
+}
 
 
         // ============================================================
