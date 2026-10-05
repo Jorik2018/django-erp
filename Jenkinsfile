@@ -13,7 +13,7 @@ pipeline {
 
         DEPLOY_DIR = 'D:\\apps\\django-erp'
 
-        PORT = '7748'
+        PORT = '7784'
         BASE_PATH = '/'
         DEFENDER_REDIS_URL = credentials('REDIS-DEVELOP')
     }
