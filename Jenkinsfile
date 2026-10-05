@@ -15,6 +15,7 @@ pipeline {
 
         PORT = '7748'
         BASE_PATH = '/'
+        DEFENDER_REDIS_URL = credentials('REDIS-DEVELOP')
     }
 
     stages {
@@ -312,6 +313,7 @@ pipeline {
                             --main "config.wsgi:application" ^
                             --host "127.0.0.1:%PORT%" ^
                             --env "BASE_PATH=%BASE_PATH%" ^
+                            --env "DEFENDER_REDIS_URL=%DEFENDER_REDIS_URL%" ^
                             --env "VAULT_ADDR=%VAULT_ADDR%" ^
                             --env "VAULT_TOKEN=%VAULT_TOKEN%"
 
