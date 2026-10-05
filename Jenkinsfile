@@ -313,6 +313,7 @@ stage('Configure Service') {
                     --env "BASE_PATH=%BASE_PATH%" ^
                     --env "DEFENDER_REDIS_URL=%DEFENDER_REDIS_URL%" ^
                     --env "VAULT_ADDR=%VAULT_ADDR%" ^
+                    --env "CSRF_TRUSTED_ORIGINS=%CSRF_TRUSTED_ORIGINS%" ^
                     --env "VAULT_TOKEN=%VAULT_TOKEN%"
 
                 if errorlevel 1 (
