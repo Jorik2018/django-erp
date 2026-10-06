@@ -26,9 +26,11 @@ class IsProfileCompleted(BasePermission):
     message = 'لطفا اطلاعات شخصی خود را تکمیل کنید.'
 
     def has_permission(self, request, view):
-        return User.objects.get(username=request.user.username).is_completed()
-
-
+        return (
+            request.user.is_authenticated
+            and request.user.is_completed()
+        )
+    
 class IsAdmin(BasePermission):
     message = "YOU ARE NOT ADMIN X("
 

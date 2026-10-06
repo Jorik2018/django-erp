@@ -16,6 +16,7 @@ pipeline {
         PORT = '7784'
         BASE_PATH = '/django'
         DEFENDER_REDIS_URL = credentials('REDIS-DEVELOP')
+        
     }
 
     stages {
