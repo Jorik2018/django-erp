@@ -3,6 +3,7 @@ from .views import SchoolView, StudentRequests, TeacherRequests, ClassView, \
     StudentView, TeacherView, MeetingView, MetaView, \
     AdminView, GuestView
 
+
 urlpatterns = [
     path('meta', MetaView.as_view()),
     path('ping', MetaView.as_view()),
