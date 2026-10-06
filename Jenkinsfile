@@ -137,52 +137,27 @@ pipeline {
 
         stage('Verify Application') {
             steps {
-                bat '''
-                    cd /D "%DEPLOY_DIR%"
-
-                    SET "BASE_PATH=%BASE_PATH%"
-
-                    echo ==========================================
-                    echo PYTHON
-                    echo ==========================================
-
-                    "%DEPLOY_DIR%\\.venv\\Scripts\\python.exe" --version
-
-                    echo ==========================================
-                    echo DJANGO
-                    echo ==========================================
-
-                    "%DEPLOY_DIR%\\.venv\\Scripts\\python.exe" ^
-                        -m django ^
-                        --version
-
-                    echo ==========================================
-                    echo DJANGO CHECK
-                    echo ==========================================
-
-                    "%DEPLOY_DIR%\\.venv\\Scripts\\python.exe" ^
-                        manage.py ^
-                        check
-
-                    if errorlevel 1 (
-                        echo ERROR: Django check failed.
-                        exit /B 1
+                withCredentials([
+                    string(
+                        credentialsId: 'VAULT_TOKEN',
+                        variable: 'VAULT_TOKEN'
                     )
-
-                    echo ==========================================
-                    echo WAITRESS
-                    echo ==========================================
-
-                    "%DEPLOY_DIR%\\.venv\\Scripts\\waitress-serve.exe" ^
-                        --help > nul
-
-                    if errorlevel 1 (
-                        echo ERROR: Waitress is not installed.
-                        exit /B 1
-                    )
-
-                    echo Django ERP OK
-                '''
+                ]) {
+                    bat '''
+                        cd /D "%DEPLOY_DIR%"
+        
+                        SET "BASE_PATH=%BASE_PATH%"
+                        SET "VAULT_ADDR=%VAULT_ADDR%"
+                        SET "VAULT_PATH=%VAULT_PATH%"
+        
+                        "%DEPLOY_DIR%\\.venv\\Scripts\\python.exe" manage.py check
+        
+                        if errorlevel 1 (
+                            echo ERROR: Django check failed.
+                            exit /B 1
+                        )
+                    '''
+                }
             }
         }
 
@@ -235,42 +210,42 @@ pipeline {
         }
 
 
-stage('Configure Service') {
-    steps {
-        withCredentials([
-            string(
-                credentialsId: 'VAULT_TOKEN',
-                variable: 'VAULT_TOKEN'
-            )
-        ]) {
-            bat '''
-                echo ==========================================
-                echo Configuring Django ERP Windows service
-                echo ==========================================
+        stage('Configure Service') {
+            steps {
+                withCredentials([
+                    string(
+                        credentialsId: 'VAULT_TOKEN',
+                        variable: 'VAULT_TOKEN'
+                    )
+                ]) {
+                    bat '''
+                        echo ==========================================
+                        echo Configuring Django ERP Windows service
+                        echo ==========================================
 
-                "%PYTHON_HOME%\\python.exe" "%SERVICE_MANAGER%" install ^
-                    "%SERVICE_ID%" ^
-                    "%DEPLOY_DIR%" ^
-                    --name "%SERVICE_NAME%" ^
-                    --description "%SERVICE_DESCRIPTION%" ^
-                    --type rust ^
-                    --executable "%DEPLOY_DIR%\\.venv\\Scripts\\waitress-serve.exe" ^
-                    --args "--listen=127.0.0.1:%PORT% config.wsgi:application" ^
-                    --env "BASE_PATH=%BASE_PATH%" ^
-                    --env "DEFENDER_REDIS_URL=%DEFENDER_REDIS_URL%" ^
-                    --env "VAULT_ADDR=%VAULT_ADDR%" ^
-                    --env "VAULT_PATH=%VAULT_PATH%" ^
-                    --env "VAULT_TOKEN=%VAULT_TOKEN%" ^
-                    --env "CSRF_TRUSTED_ORIGINS=%CSRF_TRUSTED_ORIGINS%"
+                        "%PYTHON_HOME%\\python.exe" "%SERVICE_MANAGER%" install ^
+                            "%SERVICE_ID%" ^
+                            "%DEPLOY_DIR%" ^
+                            --name "%SERVICE_NAME%" ^
+                            --description "%SERVICE_DESCRIPTION%" ^
+                            --type rust ^
+                            --executable "%DEPLOY_DIR%\\.venv\\Scripts\\waitress-serve.exe" ^
+                            --args "--listen=127.0.0.1:%PORT% config.wsgi:application" ^
+                            --env "BASE_PATH=%BASE_PATH%" ^
+                            --env "DEFENDER_REDIS_URL=%DEFENDER_REDIS_URL%" ^
+                            --env "VAULT_ADDR=%VAULT_ADDR%" ^
+                            --env "VAULT_PATH=%VAULT_PATH%" ^
+                            --env "VAULT_TOKEN=%VAULT_TOKEN%" ^
+                            --env "CSRF_TRUSTED_ORIGINS=%CSRF_TRUSTED_ORIGINS%"
 
-                if errorlevel 1 (
-                    echo ERROR: Service configuration failed
-                    exit /B 1
-                )
-            '''
+                        if errorlevel 1 (
+                            echo ERROR: Service configuration failed
+                            exit /B 1
+                        )
+                    '''
+                }
+            }
         }
-    }
-}
 
 
         // ============================================================
