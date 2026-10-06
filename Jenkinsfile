@@ -13,7 +13,7 @@ pipeline {
         DEPLOY_DIR = 'D:\\apps\\django-erp'
         PORT = '7784'
         BASE_PATH = '/django'
-        VAULT_PATH = '/v1/secret/data/global' 
+        VAULT_PATH = '/global' 
     }
 
     stages {
