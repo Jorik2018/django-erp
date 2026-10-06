@@ -10,20 +10,13 @@ pipeline {
         SERVICE_ID = 'django-erp'
         SERVICE_NAME = 'Django ERP'
         SERVICE_DESCRIPTION = 'Django ERP Application'
-
         DEPLOY_DIR = 'D:\\apps\\django-erp'
-
         PORT = '7784'
         BASE_PATH = '/django'
-        DEFENDER_REDIS_URL = credentials('REDIS-DEVELOP')
-        
+        VAULT_PATH = '/v1/secret/data/global' 
     }
 
     stages {
-
-        // ============================================================
-        // 1. Verificar entorno
-        // ============================================================
 
         stage('Check Environment') {
             steps {
@@ -46,18 +39,9 @@ pipeline {
             }
         }
 
-
-        // ============================================================
-        // 2. Detener servicio anterior
-        // ============================================================
-
         stage('Stop Service') {
             steps {
                 bat '''
-                    echo ==========================================
-                    echo Stopping Django ERP
-                    echo ==========================================
-
                     "%PYTHON_HOME%\\python.exe" ^
                         "%SERVICE_MANAGER%" ^
                         stop ^
@@ -67,11 +51,6 @@ pipeline {
                 '''
             }
         }
-
-
-        // ============================================================
-        // 3. Copiar aplicación
-        // ============================================================
 
         stage('Deploy Files') {
             steps {
@@ -105,11 +84,6 @@ pipeline {
             }
         }
 
-
-        // ============================================================
-        // 4. Crear virtualenv de producción
-        // ============================================================
-
         stage('Prepare Python Environment') {
             steps {
                 bat '''
@@ -130,11 +104,6 @@ pipeline {
             }
         }
 
-
-        // ============================================================
-        // 5. Instalar Poetry
-        // ============================================================
-
         stage('Install Poetry') {
             steps {
                 bat '''
@@ -144,11 +113,6 @@ pipeline {
                 '''
             }
         }
-
-
-        // ============================================================
-        // 6. Instalar dependencias
-        // ============================================================
 
         stage('Install Dependencies') {
             steps {
@@ -170,11 +134,6 @@ pipeline {
                 '''
             }
         }
-
-
-        // ============================================================
-        // 7. Verificar Django + Waitress
-        // ============================================================
 
         stage('Verify Application') {
             steps {
@@ -227,11 +186,6 @@ pipeline {
             }
         }
 
-
-        // ============================================================
-        // 8. Migraciones
-        // ============================================================
-
         stage('Run Migrations') {
             steps {
                 bat '''
@@ -255,11 +209,6 @@ pipeline {
                 '''
             }
         }
-
-
-        // ============================================================
-        // 9. Collect Static
-        // ============================================================
 
         stage('Collect Static') {
             steps {
@@ -292,10 +241,6 @@ stage('Configure Service') {
             string(
                 credentialsId: 'VAULT_TOKEN',
                 variable: 'VAULT_TOKEN'
-            ),
-            string(
-                credentialsId: 'REDIS-DEVELOP',
-                variable: 'DEFENDER_REDIS_URL'
             )
         ]) {
             bat '''
@@ -314,8 +259,9 @@ stage('Configure Service') {
                     --env "BASE_PATH=%BASE_PATH%" ^
                     --env "DEFENDER_REDIS_URL=%DEFENDER_REDIS_URL%" ^
                     --env "VAULT_ADDR=%VAULT_ADDR%" ^
-                    --env "CSRF_TRUSTED_ORIGINS=%CSRF_TRUSTED_ORIGINS%" ^
-                    --env "VAULT_TOKEN=%VAULT_TOKEN%"
+                    --env "VAULT_PATH=%VAULT_PATH%" ^
+                    --env "VAULT_TOKEN=%VAULT_TOKEN%" ^
+                    --env "CSRF_TRUSTED_ORIGINS=%CSRF_TRUSTED_ORIGINS%"
 
                 if errorlevel 1 (
                     echo ERROR: Service configuration failed

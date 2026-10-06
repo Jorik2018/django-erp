@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
-
+import dj_database_url
 import cloudinary
+import hvac
 import cloudinary.api
 import cloudinary.uploader
 from dotenv import load_dotenv
@@ -46,11 +47,22 @@ ALLOWED_HOSTS = os.getenv(
 ).split(",")
 
 
+response = hvac.Client(
+    url=os.environ["VAULT_ADDR"],
+    token=os.environ["VAULT_TOKEN"],
+).secrets.kv.v2.read_secret_version(
+    path=os.environ["VAULT_PATH"],
+)
+
+secrets = response["data"]["data"]
+
+DATABASE_URL = secrets["POSTGRES_URL"]
+
 # -----------------------------------------------------------------------------
 # Redis / Defender
 # -----------------------------------------------------------------------------
 
-DEFENDER_REDIS_URL = os.getenv("DEFENDER_REDIS_URL")
+DEFENDER_REDIS_URL = secrets["REDIS_URL"]
 
 
 # -----------------------------------------------------------------------------
@@ -234,16 +246,24 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
+
 # -----------------------------------------------------------------------------
 # Database
 # -----------------------------------------------------------------------------
 
 DATABASES = {
-    "default": {
+    "default": dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+    ),
+    "sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+
+
 
 
 # -----------------------------------------------------------------------------
