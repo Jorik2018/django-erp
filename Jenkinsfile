@@ -194,30 +194,39 @@ stage('Run Migrations') {
     }
 }
 
-        stage('Collect Static') {
-            steps {
-                bat '''
-                    cd /D "%DEPLOY_DIR%"
 
-                    SET "BASE_PATH=%BASE_PATH%"
+stage('Collect Static') {
+    steps {
+        withCredentials([
+            string(
+                credentialsId: 'VAULT_TOKEN',
+                variable: 'VAULT_TOKEN'
+            )
+        ]) {
+            bat '''
+                cd /D "%DEPLOY_DIR%"
 
-                    echo ==========================================
-                    echo Collecting static files
-                    echo ==========================================
+                SET "BASE_PATH=%BASE_PATH%"
+                SET "VAULT_ADDR=%VAULT_ADDR%"
+                SET "VAULT_PATH=%VAULT_PATH%"
 
-                    "%DEPLOY_DIR%\\.venv\\Scripts\\python.exe" ^
-                        manage.py ^
-                        collectstatic ^
-                        --noinput
+                echo ==========================================
+                echo Collecting static files
+                echo ==========================================
 
-                    if errorlevel 1 (
-                        echo ERROR: collectstatic failed.
-                        exit /B 1
-                    )
-                '''
-            }
+                "%DEPLOY_DIR%\\.venv\\Scripts\\python.exe" ^
+                    manage.py ^
+                    collectstatic ^
+                    --noinput
+
+                if errorlevel 1 (
+                    echo ERROR: collectstatic failed.
+                    exit /B 1
+                )
+            '''
         }
-
+    }
+}
 
         stage('Configure Service') {
             steps {
