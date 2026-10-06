@@ -161,29 +161,38 @@ pipeline {
             }
         }
 
-        stage('Run Migrations') {
-            steps {
-                bat '''
-                    cd /D "%DEPLOY_DIR%"
+stage('Run Migrations') {
+    steps {
+        withCredentials([
+            string(
+                credentialsId: 'VAULT_TOKEN',
+                variable: 'VAULT_TOKEN'
+            )
+        ]) {
+            bat '''
+                cd /D "%DEPLOY_DIR%"
 
-                    SET "BASE_PATH=%BASE_PATH%"
+                SET "BASE_PATH=%BASE_PATH%"
+                SET "VAULT_ADDR=%VAULT_ADDR%"
+                SET "VAULT_PATH=%VAULT_PATH%"
 
-                    echo ==========================================
-                    echo Running Django migrations
-                    echo ==========================================
+                echo ==========================================
+                echo Running Django migrations
+                echo ==========================================
 
-                    "%DEPLOY_DIR%\\.venv\\Scripts\\python.exe" ^
-                        manage.py ^
-                        migrate ^
-                        --noinput
+                "%DEPLOY_DIR%\\.venv\\Scripts\\python.exe" ^
+                    manage.py ^
+                    migrate ^
+                    --noinput
 
-                    if errorlevel 1 (
-                        echo ERROR: Django migrations failed.
-                        exit /B 1
-                    )
-                '''
-            }
+                if errorlevel 1 (
+                    echo ERROR: Django migrations failed.
+                    exit /B 1
+                )
+            '''
         }
+    }
+}
 
         stage('Collect Static') {
             steps {
